@@ -16,7 +16,7 @@ CREATE TABLE Categories
 CREATE TABLE Products
 (
     product_id          SERIAL PRIMARY KEY,
-    product_name        VARCHAR(100)                              NOT NULL,
+    product_name        VARCHAR(100)                             NOT NULL,
     product_model       VARCHAR(60),
     product_description VARCHAR(300),
     product_price       NUMERIC(7, 2) CHECK (product_price >= 0) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE Orders
     order_date             DATE      DEFAULT CURRENT_DATE,
     order_time             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     product_id             INT           NOT NULL,
-    product_name           VARCHAR(100)   NOT NULL,
+    product_name           VARCHAR(100)  NOT NULL,
     product_model          VARCHAR(60),
     delivery_address       VARCHAR(100)  NOT NULL,
     order_total_price      NUMERIC(7, 2) NOT NULL CHECK (order_total_price >= 0),
