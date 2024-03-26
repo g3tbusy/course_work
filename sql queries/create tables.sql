@@ -32,7 +32,7 @@ CREATE TABLE Orders
     user_id              INT           NOT NULL,
     order_status         VARCHAR(30)   NOT NULL,
     order_date           DATE      DEFAULT CURRENT_DATE,
-    order_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    order_time           TIME      DEFAULT CURRENT_TIMESTAMP,
     product_id           INT           NOT NULL,
     product_name         VARCHAR(100)  NOT NULL,
     delivery_address     VARCHAR(100)  NOT NULL,
