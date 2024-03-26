@@ -28,17 +28,16 @@ CREATE TABLE Products
 
 CREATE TABLE Orders
 (
-    order_id               SERIAL PRIMARY KEY,
-    user_id                INT           NOT NULL,
-    order_status           VARCHAR(30)   NOT NULL,
-    order_product_quantity INT,
-    order_date             DATE      DEFAULT CURRENT_DATE,
-    order_time             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    product_id             INT           NOT NULL,
-    product_name           VARCHAR(100)  NOT NULL,
-    product_model          VARCHAR(60),
-    delivery_address       VARCHAR(100)  NOT NULL,
-    order_total_price      NUMERIC(7, 2) NOT NULL CHECK (order_total_price >= 0),
+    order_id             SERIAL PRIMARY KEY,
+    user_id              INT           NOT NULL,
+    order_status         VARCHAR(30)   NOT NULL,
+    order_date           DATE      DEFAULT CURRENT_DATE,
+    order_time           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    product_id           INT           NOT NULL,
+    product_name         VARCHAR(100)  NOT NULL,
+    delivery_address     VARCHAR(100)  NOT NULL,
+    order_price          NUMERIC(7, 2) NOT NULL,
+    order_delivery_price INT           NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users (user_id),
     FOREIGN KEY (product_id) REFERENCES Products (product_id)
 );
