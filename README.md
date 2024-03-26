@@ -1,4 +1,4 @@
-### my course work repo by g3tbusy.java
+### my course work repo
 ----
 tg: [@CaroIChristianPoeIL](https://t.me/caroichristianpoeil)
 
