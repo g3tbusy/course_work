@@ -1,3 +1,59 @@
+CREATE TABLE Users
+(
+    user_id            SERIAL PRIMARY KEY NOT NULL,
+    user_name          VARCHAR(20)        NOT NULL,
+    user_email         VARCHAR(50)        NOT NULL UNIQUE,
+    user_password      CHAR(50)           NOT NULL,
+    user_mobile_number VARCHAR(11)        NOT NULL CHECK (LENGTH(user_mobile_number) = 11) UNIQUE
+);
+
+CREATE TABLE Categories
+(
+    category_id   SERIAL PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Products
+(
+    product_id          SERIAL PRIMARY KEY,
+    product_name        VARCHAR(100)                             NOT NULL,
+    product_model       VARCHAR(60),
+    product_description VARCHAR(300),
+    product_price       NUMERIC(7, 2) CHECK (product_price >= 0) NOT NULL,
+    category_name       VARCHAR(50)                              NOT NULL,
+    category_id         INT                                      NOT NULL,
+    FOREIGN KEY (category_name) REFERENCES Categories (category_name),
+    FOREIGN KEY (category_id) REFERENCES Categories (category_id)
+);
+
+CREATE TABLE Orders
+(
+    order_id             SERIAL PRIMARY KEY,
+    user_id              INT           NOT NULL,
+    order_status         VARCHAR(30)   NOT NULL,
+    order_date           DATE      DEFAULT CURRENT_DATE,
+    order_time           TIME      DEFAULT CURRENT_TIMESTAMP,
+    product_id           INT           NOT NULL,
+    product_name         VARCHAR(100)  NOT NULL,
+    delivery_address     VARCHAR(100)  NOT NULL,
+    order_price          NUMERIC(7, 2) NOT NULL,
+    order_delivery_price INT           NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users (user_id),
+    FOREIGN KEY (product_id) REFERENCES Products (product_id)
+);
+
+CREATE TABLE ProductReviews
+(
+    review_id     SERIAL PRIMARY KEY,
+    user_id       INT NOT NULL,
+    product_id    INT NOT NULL,
+    review_text   VARCHAR(500),
+    review_rating NUMERIC(2, 1) CHECK (review_rating >= 1 AND review_rating <= 5),
+    review_date   DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (user_id) REFERENCES Users (user_id),
+    FOREIGN KEY (product_id) REFERENCES Products (product_id)
+);
+
 INSERT INTO Users (user_name, user_email, user_password, user_mobile_number)
 VALUES ('Иван', 'ivan123@example.com', 'p@ssw0rd123', '79123456789'),
        ('Елена', 'elena456@example.com', 'qwerty456', '79234567890'),
@@ -632,3 +688,169 @@ VALUES  (1, 45, 'В обработке', '2023-07-12', '16:28:02', 22, 'Встр
         (109, 45, 'Отменен', '2023-10-18', '21:32:37', 97, 'Масляный обогреватель Polaris', 'ул. Цветочная, д. 10, кв. 1', 6000.00, 420),
         (110, 84, 'В обработке', '2023-09-01', '14:55:03', 101, 'Нож для кухонного комбайна Braun', 'ул. Пионерская, д. 5, кв. 7', 3500.00, 930),
         (111, 32, 'На сборке', '2023-09-15', '12:25:39', 98, 'Очиститель воздуха Sharp', 'ул. Лесная, д. 15, кв. 9', 25000.00, 680); -- в курсаче через copy from
+
+-- -- -- -- Представления на выборку данных из нескольких таблиц с использованием условий отбора по нескольким полям -- -- -- --
+
+-- Представление для просмотра заказов определенного пользователя. В данном случае user_id 1
+CREATE VIEW UserOrders AS
+SELECT o.order_id, p.product_name, o.order_date, o.order_price
+FROM Orders o
+         JOIN Products p ON o.product_id = p.product_id
+WHERE o.user_id = 12;
+
+-- Представление для просмотра отзывов определенного товара. В данном случае product_id 1
+CREATE VIEW ProductSpecificReviews AS
+SELECT pr.review_text, pr.review_rating, u.user_name
+FROM ProductReviews pr
+         JOIN Users u ON pr.user_id = u.user_id
+WHERE pr.product_id = 99;
+
+-- Представление для просмотра информации о продуктах определенной категории. В данном случае пылесосы
+CREATE VIEW CategoryProducts AS
+SELECT p.product_id, p.product_name, p.product_price, p.product_description
+FROM Products p
+         JOIN Categories c ON p.category_id = c.category_id
+WHERE c.category_name = 'Пылесосы';
+
+-- Представление для просмотра средней оценки продуктов в каждой категории.
+CREATE VIEW AverageRatingPerCategory AS
+SELECT c.category_name, ROUND(AVG(pr.review_rating), 1) AS avg_rating
+FROM Categories c
+         JOIN Products p ON c.category_id = p.category_id
+         LEFT JOIN ProductReviews pr ON p.product_id = pr.product_id
+GROUP BY c.category_name;
+
+-- -- -- -- -- -- -- -- -- -- -- -- Представления с использованием расчетных полей -- -- -- -- -- -- -- -- -- -- -- --
+
+-- Представление для просмотра информации о товарах с добавленным расчетным полем для скидки
+CREATE VIEW ProductsWithDiscount AS
+SELECT p.*,
+       CASE
+           WHEN p.product_price >= 25000 THEN p.product_price * 0.25
+           ELSE 0
+           END AS discount_amount
+FROM Products p;
+
+-- Представление для просмотра информации о заказах с добавленным расчетным полем для общей стоимости заказа
+CREATE VIEW OrderTotalCost AS
+SELECT o.*,
+       o.order_price + o.order_delivery_price AS total_cost
+FROM Orders o;
+
+-- -- -- -- -- -- -- -- -- -- -- -- Представления с использованием оконных функций -- -- -- -- -- -- -- -- -- -- -- --
+
+-- Представление для просмотра суммарной стоимости заказов по дням
+CREATE VIEW DailyTotalOrderCost AS
+SELECT order_date,
+       SUM(order_price + order_delivery_price) OVER (PARTITION BY order_date) AS daily_total_cost
+FROM Orders;
+
+-- Представление для просмотра самых активных пользователей по количеству заказов
+CREATE VIEW MostActiveUsers AS
+SELECT user_id,
+       COUNT(*) OVER (PARTITION BY user_id) AS total_orders
+FROM Orders;
+
+-- -- -- -- -- -- -- -- -- -- -- -- Представления с использованием групповых операций -- -- -- -- -- -- -- -- -- -- -- --
+
+-- Представление для просмотра общей стоимости заказов в каждой категории
+CREATE VIEW TotalOrderCostPerCategory AS
+SELECT p.category_name, SUM(o.order_price + o.order_delivery_price) AS total_cost
+FROM Orders o
+         JOIN Products p ON o.product_id = p.product_id
+GROUP BY p.category_name;
+
+-- Представление для просмотра суммарной стоимости заказов для каждого пользователя
+CREATE VIEW TotalOrderCostPerUser AS
+SELECT user_id, SUM(order_price + order_delivery_price) AS total_cost
+FROM Orders
+GROUP BY user_id;
+
+-- Представление для просмотра общего количества продуктов в каждой категории
+CREATE VIEW TotalProductsPerCategory AS
+SELECT p.category_id, c.category_name, COUNT(*) AS total_products
+FROM Products p
+         JOIN Categories c ON p.category_id = c.category_id
+GROUP BY p.category_id, c.category_name;
+
+-- -- -- -- -- -- -- -- Представления с использованием генерируемых столбцов (сохраняемых и не сохраняемых) -- -- -- -- -- -- -- --
+
+-- Представление добавляет столбец total_reviews для просмотра общего количества отзывов для каждого продукта
+CREATE VIEW ProductTotalReviews AS
+SELECT p.*,
+       COALESCE(pr.total_reviews, 0) AS total_reviews
+FROM Products p
+         LEFT JOIN (SELECT product_id, COUNT(*) AS total_reviews
+                    FROM ProductReviews
+                    GROUP BY product_id) pr ON p.product_id = pr.product_id;
+
+-- Представление добавляет столбец avg_rating для просмотра среднего рейтинга каждого пользователя на основе отзывов о товарах
+CREATE VIEW UserAverageRating AS
+SELECT u.user_id, u.user_name, AVG(pr.review_rating) AS avg_rating
+FROM Users u
+         LEFT JOIN ProductReviews pr ON u.user_id = pr.user_id
+GROUP BY u.user_id, u.user_name;
+
+-----------------------------
+
+-- Процедура для добавления нового пользователя
+CREATE OR REPLACE PROCEDURE add_new_user(
+    p_user_name VARCHAR(20),
+    p_user_email VARCHAR(50),
+    p_user_password CHAR(50),
+    p_user_mobile_number VARCHAR(11)
+)
+    LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    INSERT INTO Users (user_name, user_email, user_password, user_mobile_number)
+    VALUES (p_user_name, p_user_email, p_user_password, p_user_mobile_number);
+END;
+$$;
+
+CALL add_new_user('new user', 'email@example.com', 'password123', '12345678901');
+
+-- Процедура для добавления нового товара
+CREATE OR REPLACE PROCEDURE add_new_product(
+    p_product_name VARCHAR(100),
+    p_product_model VARCHAR(60),
+    p_product_description VARCHAR(300),
+    p_product_price NUMERIC(7, 2),
+    p_category_name VARCHAR(50),
+    p_category_id INT
+)
+    LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    INSERT INTO Products (product_name, product_model, product_description, product_price, category_name, category_id)
+    VALUES (p_product_name, p_product_model, p_product_description, p_product_price, p_category_name, p_category_id);
+END;
+$$;
+
+CALL add_new_product('new product', 'model X', 'description', 1000.00, 'Холодильники', 1);
+
+-- Процедура для добавления нового заказа
+CREATE OR REPLACE PROCEDURE add_new_order(
+    p_order_id INT,
+    p_user_id INT,
+    p_order_status VARCHAR(30),
+    p_product_id INT,
+    p_product_name VARCHAR(100),
+    p_delivery_address VARCHAR(100),
+    p_order_price NUMERIC(7, 2),
+    p_order_delivery_price INT
+)
+    LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    INSERT INTO Orders (order_id, user_id, order_status, product_id, product_name, delivery_address, order_price,
+                        order_delivery_price)
+    VALUES (p_order_id, p_user_id, p_order_status, p_product_id, p_product_name, p_delivery_address, p_order_price,
+            p_order_delivery_price);
+END;
+$$;
+
+CALL add_new_order(112,5, 'В обработке', 103, 'new product', 'new address', 1000.00, 50);

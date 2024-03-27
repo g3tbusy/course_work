@@ -16,7 +16,6 @@ $$;
 
 CALL add_new_user('new user', 'email@example.com', 'password123', '12345678901');
 
-
 -- Процедура для добавления нового товара
 CREATE OR REPLACE PROCEDURE add_new_product(
     p_product_name VARCHAR(100),
@@ -35,11 +34,12 @@ BEGIN
 END;
 $$;
 
-CALL add_new_product('new product', 'model X', 'description', 1000.00, 'Старая категория', 30);
+CALL add_new_product('new product', 'model X', 'description', 1000.00, 'Холодильники', 1);
 
 
 -- Процедура для добавления нового заказа
 CREATE OR REPLACE PROCEDURE add_new_order(
+    p_order_id INT,
     p_user_id INT,
     p_order_status VARCHAR(30),
     p_product_id INT,
@@ -52,11 +52,11 @@ CREATE OR REPLACE PROCEDURE add_new_order(
 AS
 $$
 BEGIN
-    INSERT INTO Orders (user_id, order_status, product_id, product_name, delivery_address, order_price,
+    INSERT INTO Orders (order_id, user_id, order_status, product_id, product_name, delivery_address, order_price,
                         order_delivery_price)
-    VALUES (p_user_id, p_order_status, p_product_id, p_product_name, p_delivery_address, p_order_price,
+    VALUES (p_order_id, p_user_id, p_order_status, p_product_id, p_product_name, p_delivery_address, p_order_price,
             p_order_delivery_price);
 END;
 $$;
 
-CALL add_new_order(5, 'В обработке', 103, 'new product', 'new address', 1000.00, 50.00);
+CALL add_new_order(112,5, 'В обработке', 103, 'new product', 'new address', 1000.00, 50);
