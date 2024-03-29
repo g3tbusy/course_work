@@ -7,6 +7,7 @@ CREATE INDEX idx_product_id ON ProductReviews (product_id);
 -- Индекс для ускорения поиска заказов по пользователю
 CREATE INDEX idx_user_id ON Orders (user_id);
 
+-- Статистика и мониторинг
 EXPLAIN SELECT * FROM Orders WHERE user_id = 68;
 
 ANALYZE orders;

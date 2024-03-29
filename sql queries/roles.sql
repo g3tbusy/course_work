@@ -2,7 +2,7 @@
 CREATE ROLE admin WITH LOGIN PASSWORD 'admin';
 GRANT ALL PRIVILEGES ON Users, Categories, Products, Orders, ProductReviews TO admin;
 
--- Роль стаффа
+-- Роль модератора
 CREATE ROLE moderator WITH LOGIN PASSWORD 'moderator';
 GRANT SELECT, INSERT, UPDATE (user_name, user_email, user_mobile_number) ON Users TO moderator;
 GRANT SELECT, INSERT, UPDATE, DELETE ON Orders TO moderator;
